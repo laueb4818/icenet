@@ -1,0 +1,36 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: gnn
+spec:
+  template:
+    spec:
+      hostIPC: true
+      containers:
+      - name: icenetgnn
+        image: "halyjo/icenetimage:latest"
+        workingDir: /storage/icenet_luigi/
+        command: ["/bin/bash", "-c"]
+        args: ["source activate icenet && python3 icenet/train_icenet_reduced.py --wandb"]
+        stdin: true
+        tty: true
+        env: 
+        - name: WANDB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wandb
+              key: apikey
+        volumeMounts:
+        - name: storage
+          mountPath: /storage
+        # - name: .cdsapirc
+        #   mountPath: ~/.cdsapirc
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: storage
+      # - name: .cdsapirc
+      #   persistentVolumeClaim:
+      #     claimName: .cdsapirc
+      restartPolicy: OnFailure
+  backoffLimit: 0
